@@ -19,7 +19,6 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal OAuth2User principal) {
-        // OAuth2User에서 이메일 추출 (네이버 기준)
         Map<String, Object> attributes = (Map<String, Object>) principal.getAttributes().get("response");
         String email = (String) attributes.get("email");
 
