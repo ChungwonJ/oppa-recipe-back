@@ -17,7 +17,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
 
-    @GetMapping("/me")
+    @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal OAuth2User principal) {
         Map<String, Object> attributes = (Map<String, Object>) principal.getAttributes().get("response");
         String email = (String) attributes.get("email");
@@ -25,7 +25,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyInfo(email));
     }
 
-    @PutMapping("/me")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> updateMe(@AuthenticationPrincipal OAuth2User principal,
                                          @RequestBody UserUpdateRequest request) {
         String email = extractEmail(principal);
@@ -33,7 +33,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/me")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> withdraw(@AuthenticationPrincipal OAuth2User principal) {
         userService.deleteUser(extractEmail(principal));
         return ResponseEntity.noContent().build();
