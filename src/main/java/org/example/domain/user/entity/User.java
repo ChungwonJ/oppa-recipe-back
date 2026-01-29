@@ -10,8 +10,6 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 @Table(name = "users")
 @SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
@@ -27,6 +25,14 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+
+    @Builder
+    private User(String email, String name, String phoneNumber, UserRole role) {
+        this.email = email;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+    }
 
     public void updateInfo(String name, String phoneNumber) {
         this.name = name;
