@@ -16,24 +16,31 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public UserResponse getMyInfo(String email) {
-        User user = userRepository.findByEmail(email)
+    // 공통 검증 메서드
+    private User getValidatedUser(Long id, String email) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        if (!user.getEmail().equals(email)) {
+            throw new CustomException(HttpStatus.FORBIDDEN, "해당 리소스에 대한 권한이 없습니다.");
+        }
+        return user;
+    }
+
+    public UserResponse getUser(Long id, String email) {
+        User user = getValidatedUser(id, email);
         return UserResponse.from(user);
     }
 
     @Transactional
-    public void updateMyProfile(String email, UserUpdateRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-
+    public void updateUser(Long id, String email, UserUpdateRequest request) {
+        User user = getValidatedUser(id, email);
         user.updateInfo(request.getName(), request.getPhoneNumber());
     }
 
     @Transactional
-    public void deleteUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-        userRepository.delete(user);
+    public void deleteUser(Long id, String email) {
+        User user = getValidatedUser(id, email);
+        user.softDelete();
     }
 }

@@ -55,6 +55,7 @@ public class AuthController {
         cookieUtil.deleteCookie(request, response, "refreshToken");
 
         String refreshToken = getRefreshTokenFromCookie(request);
+
         if (refreshToken != null) {
             try {
                 String email = tokenProvider.getEmail(refreshToken);
@@ -67,9 +68,6 @@ public class AuthController {
         return ApiResponse.of("로그아웃 되었습니다.");
     }
 
-    /**
-     * 쿠키에서 리프레시 토큰을 추출하는 공통 로직
-     */
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
         return Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
                 .filter(c -> "refreshToken".equals(c.getName()))

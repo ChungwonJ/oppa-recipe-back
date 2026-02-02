@@ -27,7 +27,7 @@ public class User extends BaseEntity {
     private UserRole role;
 
     @Builder
-    public User(String email, String name, String phoneNumber, UserRole role) {
+    private User(String email, String name, String phoneNumber, UserRole role) {
         this.email = email;
         this.name = name;
         this.phoneNumber = phoneNumber;
