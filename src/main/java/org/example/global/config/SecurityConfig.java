@@ -36,7 +36,15 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // OAuth2 관련 엔드포인트들을 확실히 열어줘야 합니다.
-                        .requestMatchers("/", "/api/auth/**", "/login/**", "/oauth2/**","/h2-console/**","/api/food/**").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/api/auth/**",
+                                "/login/**",
+                                "/oauth2/**",
+                                "/h2-console/**",
+                                "/api/food/**",
+                                "/api/youtube/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
