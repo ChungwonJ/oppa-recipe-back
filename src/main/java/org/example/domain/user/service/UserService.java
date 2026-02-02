@@ -5,6 +5,8 @@ import org.example.domain.user.dto.response.UserResponse;
 import org.example.domain.user.dto.request.UserUpdateRequest;
 import org.example.domain.user.entity.User;
 import org.example.domain.user.repository.UserRepository;
+import org.example.global.exception.CustomException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,14 +18,14 @@ public class UserService {
 
     public UserResponse getMyInfo(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         return UserResponse.from(user);
     }
 
     @Transactional
     public void updateMyProfile(String email, UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         user.updateInfo(request.getName(), request.getPhoneNumber());
     }
@@ -31,7 +33,7 @@ public class UserService {
     @Transactional
     public void deleteUser(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         userRepository.delete(user);
     }
 }

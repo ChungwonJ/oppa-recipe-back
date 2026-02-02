@@ -31,7 +31,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication) throws IOException {
 
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
 
@@ -58,13 +58,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .path("/")
                 .httpOnly(true)
-                .secure(true) // 로컬 테스트 시 false로 하면 더 편할 수 있음 (HTTPS 아닐 때)
+                .secure(true)
                 .maxAge(refreshTokenExpiration / 1000)
                 .sameSite("Lax")
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        // 테스트를 위해 리다이렉트 주소를 백엔드 주소나 프론트 주소로 확인하세요
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/api/auth/naver/callback")
                 .queryParam("accessToken", accessToken)
                 .build().toUriString();
