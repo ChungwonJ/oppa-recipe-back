@@ -25,13 +25,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+
+                //테스트용
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
+                
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // OAuth2 관련 엔드포인트들을 확실히 열어줘야 합니다.
-                        .requestMatchers("/", "/api/auth/**", "/login/**", "/oauth2/**","/h2-console/**").permitAll()
+                        .requestMatchers("/", "/api/auth/**", "/login/**", "/oauth2/**","/h2-console/**","/api/food/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

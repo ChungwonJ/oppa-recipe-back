@@ -50,7 +50,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     "response"
             );
         } catch (Exception e) {
-            // DB 통신 장애 등
+            // DB 통신 장애
             throw new OAuth2AuthenticationException("사용자 정보를 저장하는 도중 오류가 발생했습니다.");
         }
     }
