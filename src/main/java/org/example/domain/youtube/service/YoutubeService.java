@@ -2,20 +2,14 @@ package org.example.domain.youtube.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import org.example.global.exception.CustomException;
+import org.example.domain.youtube.dto.response.YoutubeSearchResultResponse;
+import org.example.global.exception.ServerException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 @Service
@@ -25,14 +19,19 @@ public class YoutubeService {
     @Value("${youtube.api-key}")
     private String youtubeApiKey;
 
+    @Value("${google.gemini.url}")
+    private String geminiUrl;
+
+    @Value("${google.gemini.api-key}")
+    private String geminiApiKey;
+
     private final RestTemplate restTemplate;
 
-    public String getMostLikedShorts(String foodName) {
+    public YoutubeSearchResultResponse getMostLikedShorts(String foodName) {
         try {
-            // 1. UriComponentsBuilder로 안전하게 URL 생성
             String searchUrl = UriComponentsBuilder.fromHttpUrl("https://www.googleapis.com/youtube/v3/search")
                     .queryParam("part", "snippet")
-                    .queryParam("q", foodName + " 레시피 shorts")
+                    .queryParam("q", "집에서 간단하게 만드는" + foodName + " 레시피 shorts")
                     .queryParam("type", "video")
                     .queryParam("videoDuration", "short")
                     .queryParam("maxResults", 5)
@@ -40,18 +39,18 @@ public class YoutubeService {
                     .build().toUriString();
 
             JsonNode searchResponse = restTemplate.getForObject(searchUrl, JsonNode.class);
+            if (searchResponse == null || searchResponse.path("items").isEmpty()) return null;
 
-            if (searchResponse == null || searchResponse.path("items").isEmpty()) {
-                return null;
-            }
-
-            // 2. ID 추출 (Stream 활용)
+            Map<String, String> idToTitleMap = new HashMap<>();
             List<String> videoIds = new ArrayList<>();
-            searchResponse.path("items").forEach(item ->
-                    videoIds.add(item.path("id").path("videoId").asText())
-            );
 
-            // 3. 통계 정보 가져오기
+            searchResponse.path("items").forEach(item -> {
+                String videoId = item.path("id").path("videoId").asText();
+                String title = item.path("snippet").path("title").asText();
+                videoIds.add(videoId);
+                idToTitleMap.put(videoId, title);
+            });
+
             String statsUrl = UriComponentsBuilder.fromHttpUrl("https://www.googleapis.com/youtube/v3/videos")
                     .queryParam("part", "statistics")
                     .queryParam("id", String.join(",", videoIds))
@@ -59,21 +58,52 @@ public class YoutubeService {
                     .build().toUriString();
 
             JsonNode statsResponse = restTemplate.getForObject(statsUrl, JsonNode.class);
-            JsonNode videoItems = statsResponse.path("items");
 
-            // 4. 최다 좋아요 영상 찾기
-            String bestVideoId = StreamSupport.stream(videoItems.spliterator(), false)
-                    .max(Comparator.comparingLong(v ->
-                            v.path("statistics").path("likeCount").asLong(0) // 비공개시 0
-                    ))
-                    .map(v -> v.path("id").asText())
+            return StreamSupport.stream(statsResponse.path("items").spliterator(), false)
+                    .max(Comparator.comparingLong(v -> v.path("statistics").path("likeCount").asLong(0)))
+                    .map(v -> {
+                        String id = v.path("id").asText();
+                        return new YoutubeSearchResultResponse(
+                                "https://www.youtube.com/shorts/" + id,
+                                idToTitleMap.get(id)
+                        );
+                    })
                     .orElse(null);
-
-            return bestVideoId != null ? "https://www.youtube.com/shorts/" + bestVideoId : null;
-
         } catch (Exception e) {
-            // 로깅 추가 권장: log.error("Youtube API Error", e);
-            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "유튜브 정보 조회 중 오류가 발생했습니다.");
+            throw new ServerException("유튜브 API 호출 실패: " + e.getMessage());
+        }
+    }
+
+    public String analyzeRecipe(YoutubeSearchResultResponse searchResult) {
+
+        String fullUrl = geminiUrl + geminiApiKey;
+
+        String prompt = String.format(
+                "영상 제목: %s\n" +
+                        "영상 링크: %s\n\n" +
+                        "위 영상의 내용을 분석해서 레시피를 요약해줘.\n" +
+                        "레시피는 최대한 잘 설명해서 답변해.\n" +
+                        "재료는 갯수랑 그람수도 포함해서 답변해.\n" +
+                        "인사말이나 부연 설명은 모두 생략하고 아래 형식으로만 답변해.\n\n" +
+                        "재료 : 재료1, 재료2, ...\n" +
+                        "레시피\n" +
+                        "1. 단계별 설명\n" +
+                        "2. ...",
+                searchResult.getTitle(), searchResult.getUrl());
+
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(Map.of("text", prompt)))
+                )
+        );
+
+        try {
+            JsonNode response = restTemplate.postForObject(fullUrl, requestBody, JsonNode.class);
+            return response.path("candidates").get(0)
+                    .path("content").path("parts").get(0)
+                    .path("text").asText().trim();
+        } catch (Exception e) {
+            throw new ServerException("레시피 요약 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 }
