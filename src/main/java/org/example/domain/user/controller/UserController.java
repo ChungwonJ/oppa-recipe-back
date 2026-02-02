@@ -18,24 +18,23 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal OAuth2User principal) {
-        Map<String, Object> attributes = (Map<String, Object>) principal.getAttributes().get("response");
-        String email = (String) attributes.get("email");
-
-        return ResponseEntity.ok(userService.getMyInfo(email));
+    public ResponseEntity<UserResponse> getUser(@PathVariable Long id,
+                                                @AuthenticationPrincipal OAuth2User principal) {
+        return ResponseEntity.ok(userService.getUser(id, extractEmail(principal)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateMe(@AuthenticationPrincipal OAuth2User principal,
-                                         @RequestBody UserUpdateRequest request) {
-        String email = extractEmail(principal);
-        userService.updateMyProfile(email, request);
+    public ResponseEntity<Void> updateUser(@PathVariable Long id,
+                                           @AuthenticationPrincipal OAuth2User principal,
+                                           @RequestBody UserUpdateRequest request) {
+        userService.updateUser(id, extractEmail(principal), request);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal OAuth2User principal) {
-        userService.deleteUser(extractEmail(principal));
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id,
+                                           @AuthenticationPrincipal OAuth2User principal) {
+        userService.deleteUser(id, extractEmail(principal));
         return ResponseEntity.noContent().build();
     }
 

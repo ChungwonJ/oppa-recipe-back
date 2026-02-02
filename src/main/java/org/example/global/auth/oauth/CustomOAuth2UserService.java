@@ -32,7 +32,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = (String) response.get("name");
         String mobile = (String) response.get("mobile");
         try {
-            User user = userRepository.findByEmail(email)
+            User user = userRepository.findByEmailAndIsDeletedFalse(email)
                     .map(entity -> {
                         entity.updateInfo(name, mobile);
                         return entity;
