@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.domain.user.dto.response.UserResponse;
 import org.example.domain.user.dto.request.UserUpdateRequest;
 import org.example.domain.user.service.UserService;
+import org.example.global.exception.CustomException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -20,6 +22,10 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable Long id,
                                                 @AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
+        }
+
         return ResponseEntity.ok(userService.getUser(id, extractEmail(principal)));
     }
 

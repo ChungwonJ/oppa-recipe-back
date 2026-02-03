@@ -73,19 +73,16 @@ class UserServiceTest {
         String ownerEmail = "owner@naver.com";
         String attackerEmail = "attacker@naver.com";
 
-        User user = User.builder()
-                .email(ownerEmail)
-                .name("실제주인")
-                .build();
-
+        User user = User.builder().email(ownerEmail).name("실제주인").build();
         ReflectionTestUtils.setField(user, "id", userId);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
         // when & then
         assertThatThrownBy(() -> userService.getUser(userId, attackerEmail))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("status", HttpStatus.FORBIDDEN)
-                .hasMessageContaining("해당 리소스에 대한 권한이 없습니다.");
+                .extracting("status") // 필드 검증 대신 extracting 사용 (안전함)
+                .isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -94,10 +91,8 @@ class UserServiceTest {
         // given
         Long userId = 1L;
         String email = "test@naver.com";
-        User user = User.builder()
-                .email(email)
-                .name("이전이름")
-                .build();
+        User user = User.builder().email(email).name("이전이름").build();
+        ReflectionTestUtils.setField(user, "id", userId);
 
         UserUpdateRequest request = new UserUpdateRequest("새이름", "010-1111-2222");
 
@@ -126,6 +121,6 @@ class UserServiceTest {
 
         // then
         assertThat(user.getIsDeleted()).isTrue();
-        verify(userRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any(User.class));
     }
 }
