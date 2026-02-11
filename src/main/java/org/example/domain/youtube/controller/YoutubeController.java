@@ -1,6 +1,7 @@
 package org.example.domain.youtube.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.domain.youtube.dto.response.RecipeAnalysisResponse;
 import org.example.domain.youtube.dto.response.YoutubeSearchResultResponse;
 import org.example.domain.youtube.service.YoutubeService;
 import org.springframework.http.HttpStatus;
@@ -21,22 +22,15 @@ public class YoutubeController {
     private final YoutubeService youtubeService;
 
     @GetMapping("/recipe")
-    public ResponseEntity<Map<String, String>> getShortsRecipe(@RequestParam String foodName) {
-        // 유튜브 인기 쇼츠 검색
+    public ResponseEntity<RecipeAnalysisResponse> getShortsRecipe(@RequestParam String foodName) {
+
         YoutubeSearchResultResponse searchResult = youtubeService.getMostLikedShorts(foodName);
 
         if (searchResult == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "영상을 찾을 수 없습니다."));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // 제목 정보를 포함하여 Gemini 분석 요청
-        String recipeAnalysis = youtubeService.analyzeRecipe(searchResult);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("foodName", foodName);
-        response.put("videoTitle", searchResult.getTitle());
-        response.put("shortsUrl", searchResult.getUrl());
-        response.put("recipe", recipeAnalysis);
+        RecipeAnalysisResponse response = youtubeService.analyzeRecipe(searchResult, foodName);
 
         return ResponseEntity.ok(response);
     }
