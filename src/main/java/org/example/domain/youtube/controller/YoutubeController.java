@@ -22,17 +22,16 @@ public class YoutubeController {
 
     @GetMapping("/recipe")
     public ResponseEntity<Map<String, String>> getShortsRecipe(@RequestParam String foodName) {
-        // 1. 유튜브 인기 쇼츠 검색 (URL + Title)
+        // 유튜브 인기 쇼츠 검색
         YoutubeSearchResultResponse searchResult = youtubeService.getMostLikedShorts(foodName);
 
         if (searchResult == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "영상을 찾을 수 없습니다."));
         }
 
-        // 2. 제목 정보를 포함하여 Gemini 분석 요청
+        // 제목 정보를 포함하여 Gemini 분석 요청
         String recipeAnalysis = youtubeService.analyzeRecipe(searchResult);
 
-        // 3. 결과 응답
         Map<String, String> response = new HashMap<>();
         response.put("foodName", foodName);
         response.put("videoTitle", searchResult.getTitle());
