@@ -59,10 +59,14 @@ public class FoodVisionService {
         }
 
         // Gemini API 규격에 맞는 JSON 바디 구성
+        String prompt = "이 사진 속의 음식을 분석해서 한국어로 메뉴 이름만 딱 하나만 대답해줘. " +
+                "예: '김치볶음밥', '쌀국수'. " +
+                "만약 사진에 음식이 없거나 무엇인지 판단할 수 없다면 반드시 '음식이아님'이라고만 대답해줘.";
+
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(Map.of(
                         "parts", List.of(
-                                Map.of("text", "이 사진 속의 음식을 분석해서 한국어로 메뉴 이름만 딱 하나만 대답해줘. 예: '김치볶음밥', '쌀국수'. 다른 설명은 하지마."),
+                                Map.of("text", prompt),
                                 Map.of("inline_data", Map.of(
                                         "mime_type", mimeType,
                                         "data", base64Image
@@ -80,7 +84,13 @@ public class FoodVisionService {
             Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
             List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
 
-            return parts.get(0).get("text").toString().trim();
+            String result = parts.get(0).get("text").toString().trim();
+
+            if (result.contains("음식이아님") || result.length() > 20) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, "사진에서 음식을 찾을 수 없습니다. 음식 사진을 업로드해주세요.");
+            }
+
+            return result;
 
         } catch (Exception e) {
             e.printStackTrace();

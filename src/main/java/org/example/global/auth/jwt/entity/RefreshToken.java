@@ -12,16 +12,14 @@ import java.time.Instant;
 @Entity
 @Getter
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "refresh_token")
 public class RefreshToken {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String email;
+    @Column(nullable = false, unique = true)
+    private String naverId;
 
     @Column(nullable = false)
     private String token;
@@ -31,11 +29,10 @@ public class RefreshToken {
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column
     private Instant updatedAt;
 
-    public RefreshToken(String email, String token) {
-        this.email = email;
+    public RefreshToken(String naverId, String token) {
+        this.naverId = naverId;
         this.token = token;
     }
 

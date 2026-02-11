@@ -1,17 +1,15 @@
 package org.example.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.domain.user.dto.response.UserResponse;
 import org.example.domain.user.dto.request.UserUpdateRequest;
+import org.example.domain.user.dto.response.UserResponse;
 import org.example.domain.user.service.UserService;
 import org.example.global.exception.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -21,31 +19,30 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable Long id,
-                                                @AuthenticationPrincipal OAuth2User principal) {
-        if (principal == null) {
+                                                @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
-        return ResponseEntity.ok(userService.getUser(id, extractEmail(principal)));
+        return ResponseEntity.ok(userService.getUser(id, userDetails.getUsername()));
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<Void> updateUser(@PathVariable Long id,
-                                           @AuthenticationPrincipal OAuth2User principal,
+                                           @AuthenticationPrincipal UserDetails userDetails,
                                            @RequestBody UserUpdateRequest request) {
-        userService.updateUser(id, extractEmail(principal), request);
+        if (userDetails == null) throw new CustomException(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
+
+        userService.updateUser(id, userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id,
-                                           @AuthenticationPrincipal OAuth2User principal) {
-        userService.deleteUser(id, extractEmail(principal));
-        return ResponseEntity.noContent().build();
-    }
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) throw new CustomException(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
 
-    private String extractEmail(OAuth2User principal) {
-        Map<String, Object> response = (Map<String, Object>) principal.getAttributes().get("response");
-        return (String) response.get("email");
+        userService.deleteUser(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 }
