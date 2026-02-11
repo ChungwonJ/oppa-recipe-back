@@ -1,5 +1,6 @@
 package org.example.domain.gemini.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class FoodVisionService {
 
     @Value("${google.gemini.api-key}")
@@ -21,49 +23,62 @@ public class FoodVisionService {
     @Value("${google.gemini.url}")
     private String geminiUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
-    public String extractFoodName(MultipartFile file) throws IOException {
+    public String extractFoodName(MultipartFile file) {
+        validateImageFile(file);
 
-        String fullUrl = geminiUrl + geminiApiKey;
+        try {
+            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
+            String mimeType = determineMimeType(file);
+            String fullUrl = geminiUrl + "?key=" + geminiApiKey;
 
+            // 요청 바디 구성
+            Map<String, Object> requestBody = createGeminiRequestBody(base64Image, mimeType);
+
+            // API 호출
+            Map<String, Object> response = restTemplate.postForObject(fullUrl, requestBody, Map.class);
+
+            // 데이터 추출 로직
+            String result = parseGeminiResponse(response);
+
+            if (result.equals("음식이아님") || result.length() > 20) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, "사진에서 음식을 찾을 수 없습니다.");
+            }
+
+            return result;
+
+        } catch (IOException e) {
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 읽기 실패");
+        } catch (Exception e) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Gemini 분석 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+    private void validateImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "업로드된 파일이 비어 있습니다.");
         }
-
-        String fileName = (file.getOriginalFilename() != null) ? file.getOriginalFilename().toLowerCase() : "";
         String contentType = file.getContentType();
-
-        boolean isImage = (contentType != null && contentType.startsWith("image/")) ||
-                fileName.endsWith(".jfif") || fileName.endsWith(".jpg") ||
-                fileName.endsWith(".jpeg") || fileName.endsWith(".png") ||
-                fileName.endsWith(".webp");
-
-        if (!isImage) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "이미지 파일만 업로드 가능합니다. (인식된 타입: " + contentType + ")");
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "이미지 파일만 업로드 가능합니다.");
         }
+    }
 
-        // 이미지를 Base64 문자열로 변환
-        String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
+    private String determineMimeType(MultipartFile file) {
+        String fileName = (file.getOriginalFilename() != null) ? file.getOriginalFilename().toLowerCase() : "";
+        if (fileName.endsWith(".png")) return "image/png";
+        if (fileName.endsWith(".webp")) return "image/webp";
+        if (fileName.endsWith(".heic") || fileName.endsWith(".heif")) return "image/heic";
+        return "image/jpeg";
+    }
 
-        String mimeType;
-
-        if (fileName.endsWith(".png")) {
-            mimeType = "image/png";
-        } else if (fileName.endsWith(".webp")) {
-            mimeType = "image/webp";
-        } else if (fileName.endsWith(".heic") || fileName.endsWith(".heif")) {
-            mimeType = "image/heic";
-        } else {
-            mimeType = "image/jpeg";
-        }
-
-        // Gemini API 규격에 맞는 JSON 바디 구성
+    private Map<String, Object> createGeminiRequestBody(String base64Image, String mimeType) {
         String prompt = "이 사진 속의 음식을 분석해서 한국어로 메뉴 이름만 딱 하나만 대답해줘. " +
                 "예: '김치볶음밥', '쌀국수'. " +
                 "만약 사진에 음식이 없거나 무엇인지 판단할 수 없다면 반드시 '음식이아님'이라고만 대답해줘.";
 
-        Map<String, Object> requestBody = Map.of(
+        return Map.of(
                 "contents", List.of(Map.of(
                         "parts", List.of(
                                 Map.of("text", prompt),
@@ -74,27 +89,17 @@ public class FoodVisionService {
                         )
                 ))
         );
+    }
 
+    @SuppressWarnings("unchecked")
+    private String parseGeminiResponse(Map<String, Object> response) {
         try {
-            // API 호출 및 응답
-            Map<String, Object> response = restTemplate.postForObject(fullUrl, requestBody, Map.class);
-
-            // 응답 JSON에서 텍스트 데이터만 추출
-            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-            Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-            List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-
-            String result = parts.get(0).get("text").toString().trim();
-
-            if (result.contains("음식이아님") || result.length() > 20) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, "사진에서 음식을 찾을 수 없습니다. 음식 사진을 업로드해주세요.");
-            }
-
-            return result;
-
+            var candidates = (List<Map<String, Object>>) response.get("candidates");
+            var content = (Map<String, Object>) candidates.get(0).get("content");
+            var parts = (List<Map<String, Object>>) content.get("parts");
+            return parts.get(0).get("text").toString().trim();
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new CustomException(HttpStatus.BAD_REQUEST, "분석 실패: " + e.getMessage());
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Gemini 응답 파싱 실패");
         }
     }
 }

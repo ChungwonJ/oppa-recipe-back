@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.domain.youtube.dto.response.RecipeAnalysisResponse;
 import org.example.domain.youtube.dto.response.YoutubeSearchResultResponse;
 import org.example.domain.youtube.service.YoutubeService;
+import org.example.global.base.ApiResponse;
+import org.example.global.exception.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,16 +24,17 @@ public class YoutubeController {
     private final YoutubeService youtubeService;
 
     @GetMapping("/recipe")
-    public ResponseEntity<RecipeAnalysisResponse> getShortsRecipe(@RequestParam String foodName) {
+    public ResponseEntity<ApiResponse<RecipeAnalysisResponse>> getShortsRecipe(
+            @RequestParam(name = "foodName") String foodName) {
 
         YoutubeSearchResultResponse searchResult = youtubeService.getMostLikedShorts(foodName);
 
         if (searchResult == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            throw new CustomException(HttpStatus.NOT_FOUND, foodName + "에 대한 적절한 레시피 영상을 찾을 수 없습니다.");
         }
 
         RecipeAnalysisResponse response = youtubeService.analyzeRecipe(searchResult, foodName);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.of(response));
     }
 }
