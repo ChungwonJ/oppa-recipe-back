@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.global.auth.jwt.entity.RefreshToken;
-import org.example.global.auth.jwt.repository.RefreshTokenRepository;
 import org.example.global.auth.jwt.provider.JwtTokenProvider;
+import org.example.global.auth.jwt.repository.RefreshTokenRepository;
 import org.example.global.base.ApiResponse;
 import org.example.global.common.cookie.CookieUtil;
 import org.example.global.exception.CustomException;
@@ -37,15 +37,19 @@ public class AuthController {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 없거나 만료되었습니다.");
         }
 
+        String naverId = tokenProvider.getNaverId(refreshToken);
         String email = tokenProvider.getEmail(refreshToken);
-        RefreshToken savedToken = refreshTokenRepository.findByEmail(email)
+        String name = tokenProvider.getName(refreshToken);
+
+        RefreshToken savedToken = refreshTokenRepository.findByNaverId(naverId)
                 .orElseThrow(() -> new CustomException(HttpStatus.UNAUTHORIZED, "로그아웃된 사용자입니다."));
 
         if (!savedToken.getToken().equals(refreshToken)) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰 요청입니다.");
         }
 
-        String newAccessToken = tokenProvider.createAccessToken(email);
+        // 새 토큰 발급
+        String newAccessToken = tokenProvider.createAccessToken(naverId, email, name);
         return ApiResponse.of(Collections.singletonMap("accessToken", newAccessToken));
     }
 
@@ -58,8 +62,8 @@ public class AuthController {
 
         if (refreshToken != null) {
             try {
-                String email = tokenProvider.getEmail(refreshToken);
-                refreshTokenRepository.deleteByEmail(email);
+                String naverId = tokenProvider.getNaverId(refreshToken);
+                refreshTokenRepository.deleteByNaverId(naverId);
             } catch (Exception e) {
                 throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage);
             }

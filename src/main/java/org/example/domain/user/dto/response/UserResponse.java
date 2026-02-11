@@ -1,11 +1,14 @@
 package org.example.domain.user.dto.response;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.domain.user.entity.User;
 
 @Getter
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserResponse {
     private String email;
     private String name;

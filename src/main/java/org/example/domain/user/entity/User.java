@@ -16,6 +16,8 @@ import org.hibernate.annotations.SQLRestriction;
 public class User extends BaseEntity {
 
     @Column(nullable = false, unique = true)
+    private String naverId;
+
     private String email;
 
     private String name;
@@ -27,7 +29,8 @@ public class User extends BaseEntity {
     private UserRole role;
 
     @Builder
-    private User(String email, String name, String phoneNumber, UserRole role) {
+    private User(String naverId, String email, String name, String phoneNumber, UserRole role) {
+        this.naverId = naverId;
         this.email = email;
         this.name = name;
         this.phoneNumber = phoneNumber;

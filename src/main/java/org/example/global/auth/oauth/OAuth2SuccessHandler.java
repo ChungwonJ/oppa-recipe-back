@@ -33,20 +33,21 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                                         Authentication authentication) throws IOException {
 
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
-
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        Map<String, Object> responseMap = (Map<String, Object>) attributes.get("response");
+        Map<String, Object> responseMap = (Map<String, Object>) oAuth2User.getAttributes().get("response");
+        String naverId = (String) responseMap.get("id");
         String email = (String) responseMap.get("email");
+        String name = (String) responseMap.get("name");
 
-        String accessToken = tokenProvider.createAccessToken(email);
-        String refreshToken = tokenProvider.createRefreshToken(email);
+        String accessToken = tokenProvider.createAccessToken(naverId, email, name);
+        String refreshToken = tokenProvider.createRefreshToken(naverId, email, name);
 
         // DB 저장/업데이트
         try {
-            refreshTokenRepository.findByEmail(email)
+            refreshTokenRepository.findByNaverId(naverId)
                     .ifPresentOrElse(
                             token -> token.updateToken(refreshToken),
-                            () -> refreshTokenRepository.save(new RefreshToken(email, refreshToken))
+                            () -> refreshTokenRepository.save(new RefreshToken(naverId, refreshToken))
                     );
         } catch (Exception e) {
             // 소셜 로그인 성공 후 DB 작업 실패 시
@@ -63,7 +64,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/api/auth/naver/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3030/")
                 .queryParam("accessToken", accessToken)
                 .build().toUriString();
 

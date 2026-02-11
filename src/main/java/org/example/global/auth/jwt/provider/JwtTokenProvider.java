@@ -23,16 +23,19 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
-    public String createAccessToken(String email) {
-        return createToken(email, accessTokenExpiration);
+    public String createAccessToken(String naverId, String email, String name) {
+        return createToken(naverId, email, name, accessTokenExpiration);
     }
 
-    public String createRefreshToken(String email) {
-        return createToken(email, refreshTokenExpiration);
+    public String createRefreshToken(String naverId, String email, String name) {
+        return createToken(naverId, email, name, refreshTokenExpiration);
     }
 
-    private String createToken(String email, long expiration) {
-        Claims claims = Jwts.claims().setSubject(email);
+    private String createToken(String naverId, String email, String name, long expiration) {
+        Claims claims = Jwts.claims().setSubject(naverId);
+        claims.put("email", email);
+        claims.put("name", name);
+
         Date now = new Date();
         return Jwts.builder()
                 .setClaims(claims)
@@ -42,13 +45,31 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String getNaverId(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
     public String getEmail(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
-                .getSubject(); // 토큰 생성 시 setSubject(email)로 넣었던 값을 가져옴
+                .get("email", String.class);
+    }
+
+    public String getName(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("name", String.class);
     }
 
     public boolean validateToken(String token) {

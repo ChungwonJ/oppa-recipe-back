@@ -28,16 +28,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = oAuth2User.getAttributes();
         Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
+        String naverId = (String) response.get("id");
         String email = (String) response.get("email");
         String name = (String) response.get("name");
         String mobile = (String) response.get("mobile");
+        System.out.println("네이버에서 넘어온 이메일: " + email);
         try {
-            User user = userRepository.findByEmailAndIsDeletedFalse(email)
+            User user = userRepository.findByNaverIdAndIsDeletedFalse(naverId)
                     .map(entity -> {
                         entity.updateInfo(name, mobile);
                         return entity;
                     })
                     .orElseGet(() -> userRepository.save(User.builder()
+                            .naverId(naverId)
                             .email(email)
                             .name(name)
                             .phoneNumber(mobile)
