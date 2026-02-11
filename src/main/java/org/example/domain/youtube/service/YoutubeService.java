@@ -1,7 +1,9 @@
 package org.example.domain.youtube.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.domain.youtube.dto.response.RecipeAnalysisResponse;
 import org.example.domain.youtube.dto.response.YoutubeSearchResultResponse;
 import org.example.global.exception.ServerException;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,12 +28,13 @@ public class YoutubeService {
     private String geminiApiKey;
 
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public YoutubeSearchResultResponse getMostLikedShorts(String foodName) {
         try {
             String searchUrl = UriComponentsBuilder.fromHttpUrl("https://www.googleapis.com/youtube/v3/search")
                     .queryParam("part", "snippet")
-                    .queryParam("q", "집에서 간단하게 만드는" + foodName + " 레시피 shorts")
+                    .queryParam("q", "집에서 간단하게 만드는 " + foodName + " 레시피 shorts")
                     .queryParam("type", "video")
                     .queryParam("videoDuration", "short")
                     .queryParam("maxResults", 5)
@@ -74,34 +77,60 @@ public class YoutubeService {
         }
     }
 
-    public String analyzeRecipe(YoutubeSearchResultResponse searchResult) {
-
+    public RecipeAnalysisResponse analyzeRecipe(YoutubeSearchResultResponse searchResult, String foodName) {
         String fullUrl = geminiUrl + geminiApiKey;
 
         String prompt = String.format(
                 "영상 제목: %s\n" +
-                        "영상 링크: %s\n\n" +
-                        "위 영상의 내용을 분석해서 레시피를 요약해줘.\n" +
-                        "레시피는 최대한 잘 설명해서 답변해.\n" +
-                        "재료는 갯수랑 그람수도 포함해서 답변해.\n" +
-                        "인사말이나 부연 설명은 모두 생략하고 아래 형식으로만 답변해.\n\n" +
-                        "재료 : 재료1, 재료2, ...\n" +
-                        "레시피\n" +
-                        "1. 단계별 설명\n" +
-                        "2. ...",
-                searchResult.getTitle(), searchResult.getUrl());
+                        "위 요리 영상의 내용을 분석해서 반드시 아래 JSON 형식으로만 답변해. 다른 설명은 하지마.\n\n" +
+                        "{\n" +
+                        "  \"recipe\": \"1. 조리법... 2. 조리법...\",\n" +
+                        "  \"ingredients\": [\n" +
+                        "    {\"name\": \"재료이름\", \"amount\": \"수량\"},\n" +
+                        "    {\"name\": \"재료이름\", \"amount\": \"수량\"}\n" +
+                        "  ]\n" +
+                        "}\n\n" +
+                        "조건:\n" +
+                        "- 'name'은 쿠팡 검색용이므로 '당근', '계란'처럼 명사만 쓸 것.\n" +
+                        "- 'amount': 그램수나 갯수 (예: '300g', '2개'). **정확한 수량 정보가 없으면 빈 문자열(\"\")로 대답할 것.**\n" +
+                        "- recipe는 상세하고 친절하게 설명해.",
+                searchResult.getTitle());
 
         Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
-                        Map.of("parts", List.of(Map.of("text", prompt)))
-                )
+                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
         );
 
         try {
             JsonNode response = restTemplate.postForObject(fullUrl, requestBody, JsonNode.class);
-            return response.path("candidates").get(0)
+            String rawText = response.path("candidates").get(0)
                     .path("content").path("parts").get(0)
                     .path("text").asText().trim();
+
+            String jsonStr = rawText.replaceAll("```json|```", "").trim();
+            JsonNode recipeNode = objectMapper.readTree(jsonStr);
+
+            List<RecipeAnalysisResponse.IngredientDto> ingredientList = new ArrayList<>();
+            recipeNode.path("ingredients").forEach(i -> {
+                String name = i.path("name").asText("").trim();
+                String amount = i.path("amount").asText("").trim();
+
+                if (amount.equalsIgnoreCase("null") || amount.equals("정보없음") || amount.isEmpty()) {
+                    amount = "";
+                }
+
+                if (!name.isEmpty()) {
+                    ingredientList.add(new RecipeAnalysisResponse.IngredientDto(name, amount));
+                }
+            });
+
+            return RecipeAnalysisResponse.builder()
+                    .foodName(foodName)
+                    .videoTitle(searchResult.getTitle())
+                    .shortsUrl(searchResult.getUrl())
+                    .recipe(recipeNode.path("recipe").asText())
+                    .ingredients(ingredientList)
+                    .build();
+
         } catch (Exception e) {
             throw new ServerException("레시피 요약 중 오류가 발생했습니다: " + e.getMessage());
         }
