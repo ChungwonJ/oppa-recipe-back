@@ -31,7 +31,7 @@ public class FoodVisionService {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
             String mimeType = determineMimeType(file);
-            String fullUrl = geminiUrl + "?key=" + geminiApiKey;
+            String fullUrl = geminiUrl + geminiApiKey;
 
             // 요청 바디 구성
             Map<String, Object> requestBody = createGeminiRequestBody(base64Image, mimeType);
@@ -59,9 +59,15 @@ public class FoodVisionService {
         if (file == null || file.isEmpty()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "업로드된 파일이 비어 있습니다.");
         }
+
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "이미지 파일만 업로드 가능합니다.");
+        String fileName = (file.getOriginalFilename() != null) ? file.getOriginalFilename().toLowerCase() : "";
+
+        boolean isJpgFamily = fileName.endsWith(".jfif") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg");
+        boolean isImageMime = contentType != null && contentType.startsWith("image/");
+
+        if (!isImageMime && !isJpgFamily) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "이미지 파일만 업로드 가능합니다. (현재 형식: " + contentType + ")");
         }
     }
 
@@ -70,6 +76,10 @@ public class FoodVisionService {
         if (fileName.endsWith(".png")) return "image/png";
         if (fileName.endsWith(".webp")) return "image/webp";
         if (fileName.endsWith(".heic") || fileName.endsWith(".heif")) return "image/heic";
+
+        String contentType = file.getContentType();
+        if (contentType != null && contentType.contains("jpeg")) return "image/jpeg";
+
         return "image/jpeg";
     }
 
