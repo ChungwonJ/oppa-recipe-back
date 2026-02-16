@@ -1,4 +1,4 @@
-package org.example.global.common.processor;
+package org.example.domain.gemini.util;
 
 import org.example.global.exception.CustomException;
 import org.springframework.http.HttpStatus;

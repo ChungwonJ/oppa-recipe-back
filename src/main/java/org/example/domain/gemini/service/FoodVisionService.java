@@ -1,19 +1,12 @@
 package org.example.domain.gemini.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.global.common.client.GeminiClient;
-import org.example.global.common.processor.ImageProcessor;
+import org.example.domain.gemini.client.GeminiClient;
+import org.example.domain.gemini.util.ImageProcessor;
 import org.example.global.exception.CustomException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package org.example.global.common.client;
+package org.example.domain.gemini.client;
 
 import lombok.RequiredArgsConstructor;
 import org.example.global.exception.CustomException;
