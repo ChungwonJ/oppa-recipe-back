@@ -46,5 +46,4 @@ bin/
 ## local
 *-local.yml
 *-local.properties
-*.yml
 *.json
