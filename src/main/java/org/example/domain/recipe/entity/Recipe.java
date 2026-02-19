@@ -15,6 +15,7 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLDelete(sql = "UPDATE recipes SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
+@Table(name = "recipes")
 public class Recipe extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
