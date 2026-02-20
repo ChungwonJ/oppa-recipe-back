@@ -47,3 +47,5 @@ bin/
 *-local.yml
 *-local.properties
 *.json
+
+.idea/dbnavigator.xml

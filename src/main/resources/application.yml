@@ -53,3 +53,6 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: ${JWT_ACCESS_EXP}
   refresh-token-expiration: ${JWT_REFRESH_EXP}
+
+server:
+  forward-headers-strategy: framework

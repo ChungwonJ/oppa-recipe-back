@@ -43,11 +43,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-
-                        .authorizationEndpoint(e -> e.baseUri("/api/auth/login"))
-
-                        .redirectionEndpoint(r -> r.baseUri("/api/auth/naver/callback"))
-
                         .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
                 )
