@@ -30,7 +30,7 @@ jobs:
           utcOffset: "+09:00"
 
       - name: Set artifact
-        run: echo "artifact=$(ls ./build/libs)" >> $GITHUB_ENV
+        run: ARTIFACT_NAME=$(ls build/libs/*.jar | grep -v "plain" | head -n 1) echo "artifact=$ARTIFACT_NAME" >> $GITHUB_ENV
 
       - name: Beanstalk Deploy
         uses: einaregilsson/beanstalk-deploy@v20
