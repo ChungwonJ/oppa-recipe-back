@@ -35,7 +35,7 @@ spring:
             redirect-uri: ${NAVER_REDIRECT_URI}
             authorization-grant-type: authorization_code
             scope: name, email, mobile
-            client-name: Naver
+            client-name: Naver, test
         provider:
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
