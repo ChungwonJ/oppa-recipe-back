@@ -19,7 +19,7 @@ public class WebConfig {
 
         apiConfig.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://api.test.online"
+                "https://oppa-recipe.vercel.app"
         ));
 
         apiConfig.setAllowCredentials(true);
