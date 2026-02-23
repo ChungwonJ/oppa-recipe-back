@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 "/api/food/**",
                                 "/api/youtube/**",
                                 "/error"
+
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
