@@ -36,4 +36,9 @@ public class GlobalExceptionHandler {
         return ErrorResponse.toResponseEntity(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleAllException(Exception e) {
+        e.printStackTrace();
+        return ErrorResponse.toResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류: " + e.getMessage());
+    }
 }
