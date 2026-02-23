@@ -38,7 +38,8 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/h2-console/**",
                                 "/api/food/**",
-                                "/api/youtube/**"
+                                "/api/youtube/**",
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
