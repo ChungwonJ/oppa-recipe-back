@@ -56,6 +56,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // Refresh Token 쿠키 설정
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .domain("oppa-recipe.shop")
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
