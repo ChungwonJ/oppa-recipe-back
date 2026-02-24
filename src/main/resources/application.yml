@@ -56,3 +56,4 @@ jwt:
 
 server:
   forward-headers-strategy: native
+
