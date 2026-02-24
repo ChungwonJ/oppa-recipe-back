@@ -55,4 +55,4 @@ jwt:
   refresh-token-expiration: ${JWT_REFRESH_EXP}
 
 server:
-  forward-headers-strategy: framework
+  forward-headers-strategy: native
