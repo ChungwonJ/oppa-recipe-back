@@ -64,7 +64,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3030/")
+        String targetUrl = UriComponentsBuilder.fromUriString("https://oppa-recipe.vercel.app/")
                 .queryParam("accessToken", accessToken)
                 .build().toUriString();
 
