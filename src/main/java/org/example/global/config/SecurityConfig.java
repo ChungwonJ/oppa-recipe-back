@@ -31,36 +31,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .csrf(csrf -> csrf.disable())
-
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin())
-                )
-
+                .headers(headers -> headers.frameOptions(f -> f.sameOrigin()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                                "/",
-                                "/api/auth/**",
-                                "/login/**",
-                                "/oauth2/**",
-                                "/h2-console/**",
-                                "/api/food/**",
-                                "/api/youtube/**",
-                                "/error",
-                                "/favicon.ico"
-                        ).permitAll()
+                        .requestMatchers("/", "/api/auth/**", "/login/**", "/oauth2/**", "/error", "/favicon.ico", "/api/food/**", "/api/youtube/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
                 )
-
                 .addFilterBefore(new JwtAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -69,14 +51,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // 허용할 프론트엔드 도메인
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "https://www.oppa-recipe.shop",
                 "https://oppa-recipe.shop"
         ));
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
