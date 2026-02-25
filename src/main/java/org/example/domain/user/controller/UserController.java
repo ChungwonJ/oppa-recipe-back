@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/my")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -29,7 +29,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/my")
     public ResponseEntity<ApiResponse<Long>> updateUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails,
@@ -42,7 +42,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.of(id));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/my")
     public ResponseEntity<ApiResponse<Long>> deleteUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
