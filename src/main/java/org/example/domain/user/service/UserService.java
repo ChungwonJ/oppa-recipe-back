@@ -16,31 +16,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
 
-    // 공통 검증 메서드
-    private User getValidatedUser(Long id, String naverId) {
-        User user = userRepository.findById(id)
+    private User getValidatedUserByNaverId(String naverId) {
+        return userRepository.findByNaverIdAndIsDeletedFalse(naverId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-
-        if (!user.getNaverId().equals(naverId)) {
-            throw new CustomException(HttpStatus.FORBIDDEN, "해당 리소스에 대한 권한이 없습니다.");
-        }
-        return user;
     }
 
-    public UserResponse getUser(Long id, String naverId) {
-        User user = getValidatedUser(id, naverId);
+    public UserResponse getMyInfo(String naverId) {
+        User user = getValidatedUserByNaverId(naverId);
         return UserResponse.from(user);
     }
 
     @Transactional
-    public void updateUser(Long id, String naverId, UserUpdateRequest request) {
-        User user = getValidatedUser(id, naverId);
+    public void updateMyInfo(String naverId, UserUpdateRequest request) {
+        User user = getValidatedUserByNaverId(naverId);
         user.updateInfo(request.getName(), request.getPhoneNumber());
     }
 
     @Transactional
-    public void deleteUser(Long id, String naverId) {
-        User user = getValidatedUser(id, naverId);
+    public void deleteMe(String naverId) {
+        User user = getValidatedUserByNaverId(naverId);
         user.softDelete();
     }
 }

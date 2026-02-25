@@ -19,39 +19,34 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<UserResponse>> getUser(
-            @PathVariable Long id,
+    public ResponseEntity<ApiResponse<UserResponse>> getMyInfo(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         validateAuthentication(userDetails);
 
-        UserResponse response = userService.getUser(id, userDetails.getUsername());
+        UserResponse response = userService.getMyInfo(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
     @PostMapping("/my")
-    public ResponseEntity<ApiResponse<Long>> updateUser(
-            @PathVariable Long id,
+    public ResponseEntity<ApiResponse<Void>> updateMyInfo(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody UserUpdateRequest request) {
 
         validateAuthentication(userDetails);
 
-        userService.updateUser(id, userDetails.getUsername(), request);
-
-        return ResponseEntity.ok(ApiResponse.of(id));
+        userService.updateMyInfo(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.of(null));
     }
 
     @DeleteMapping("/my")
-    public ResponseEntity<ApiResponse<Long>> deleteUser(
-            @PathVariable Long id,
+    public ResponseEntity<ApiResponse<Void>> deleteMe(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         validateAuthentication(userDetails);
 
-        userService.deleteUser(id, userDetails.getUsername());
-
-        return ResponseEntity.ok(ApiResponse.of(id));
+        userService.deleteMe(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.of(null));
     }
 
     private void validateAuthentication(UserDetails userDetails) {
