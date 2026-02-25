@@ -30,7 +30,7 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(recipeId));
     }
 
-    @GetMapping("/my")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<List<RecipeResponse>>> getMyRecipes(
             @AuthenticationPrincipal UserDetails userDetails,
             @ModelAttribute Pagecond pagecond) {
