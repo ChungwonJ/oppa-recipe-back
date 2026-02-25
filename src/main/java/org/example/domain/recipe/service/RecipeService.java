@@ -71,6 +71,13 @@ public class RecipeService {
         return ApiResponse.of(content, pageInfo);
     }
 
+    public ApiResponse<RecipeResponse> getRecipeDetail(Long recipeId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "레시피를 찾을 수 없습니다."));
+
+        return ApiResponse.of(RecipeResponse.from(recipe, objectMapper, "레시피 변환 중 오류 발생"));
+    }
+
     @Transactional
     public void delete(Long recipeId, String naverId) {
         Recipe recipe = recipeRepository.findById(recipeId)

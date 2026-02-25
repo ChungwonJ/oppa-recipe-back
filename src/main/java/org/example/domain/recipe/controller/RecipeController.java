@@ -30,14 +30,24 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(recipeId));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<RecipeResponse>>> getMyRecipes(
             @AuthenticationPrincipal UserDetails userDetails,
             @ModelAttribute Pagecond pagecond) {
 
-        ApiResponse<List<RecipeResponse>> response =
-                recipeService.getMyRecipes(userDetails.getUsername(), pagecond);
+        Pagecond cond = new Pagecond(pagecond.getPageNum(), pagecond.getPageSize());
 
+        ApiResponse<List<RecipeResponse>> response =
+                recipeService.getMyRecipes(userDetails.getUsername(), cond);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<RecipeResponse>> getRecipeDetail(
+            @PathVariable("id") Long id) {
+
+        ApiResponse<RecipeResponse> response = recipeService.getRecipeDetail(id);
         return ResponseEntity.ok(response);
     }
 
