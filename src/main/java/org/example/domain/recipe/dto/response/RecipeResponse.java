@@ -52,12 +52,12 @@ public class RecipeResponse {
     @NoArgsConstructor
     public static class IngredientDto {
         private String name;
-        private String amount;
+        private String fullInfo;
 
         @Builder
-        public IngredientDto(String name, String amount) {
+        public IngredientDto(String name, String fullInfo) {
             this.name = name;
-            this.amount = amount;
+            this.fullInfo = fullInfo;
         }
     }
 
