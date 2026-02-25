@@ -5,31 +5,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.domain.recipe.entity.Recipe;
-import org.example.global.exception.ServerException;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Slf4j
 public class RecipeResponse {
     private final Long id;
-
     private final String foodName;
-
     private final String videoTitle;
-
     private final String shortsUrl;
-
     private final String recipeContent;
-
     private final List<IngredientDto> ingredients;
-
     private final Instant createdAt;
-
     private final Instant updatedAt;
-
     private final Boolean isDeleted;
 
     @Builder
@@ -70,13 +63,14 @@ public class RecipeResponse {
 
     public static RecipeResponse from(Recipe recipe, ObjectMapper objectMapper, String errorMessage) {
         List<IngredientDto> ingredientList = new ArrayList<>();
-        try {
-            if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
+
+        if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
+            try {
                 ingredientList = objectMapper.readValue(recipe.getIngredients(),
                         new TypeReference<List<IngredientDto>>() {});
+            } catch (Exception e) {
+                log.error("레시피 ID: {} - 재료 JSON 파싱 에러: {}", recipe.getId(), e.getMessage());
             }
-        } catch (Exception e) {
-            throw new ServerException(errorMessage);
         }
 
         return RecipeResponse.builder()
