@@ -1,6 +1,7 @@
 package org.example.global.config;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.filters.CorsFilter;
 import org.example.global.auth.jwt.filter.JwtAuthenticationFilter;
 import org.example.global.auth.jwt.provider.JwtTokenProvider;
 import org.example.global.auth.oauth.CustomOAuth2UserService;
@@ -20,11 +21,13 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtTokenProvider tokenProvider;
+    private final CorsFilter corsFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
@@ -39,6 +42,7 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/api/food/**",
                                 "/api/youtube/**",
+                                "/api/v1/users/**",
                                 "/error",
                                 "/favicon.ico"
                         ).permitAll()
