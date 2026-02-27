@@ -1,5 +1,6 @@
 package org.example.global.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.global.auth.jwt.filter.JwtAuthenticationFilter;
 import org.example.global.auth.jwt.provider.JwtTokenProvider;
@@ -38,6 +39,13 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/api/auth/**", "/login/**", "/oauth2/**", "/error", "/favicon.ico", "/api/food/**", "/api/youtube/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"message\":\"AccessToken 만료 및 인증 실패\"}");
+                        })
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
