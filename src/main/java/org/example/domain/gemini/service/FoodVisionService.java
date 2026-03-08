@@ -21,7 +21,7 @@ public class FoodVisionService {
         String base64Image = imageProcessor.encodeToBase64(file);
         String mimeType = imageProcessor.getMimeType(file);
 
-        String result = geminiClient.getAnalysis(base64Image, mimeType);
+        String result = geminiClient.analyzeFoodImage(base64Image, mimeType);
 
         if ("음식이아님".equals(result) || result.length() > 20) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "음식 사진이 아니거나 인식할 수 없습니다.");
