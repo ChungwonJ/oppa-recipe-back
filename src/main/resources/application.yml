@@ -57,3 +57,8 @@ jwt:
 server:
   forward-headers-strategy: native
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=24h
+

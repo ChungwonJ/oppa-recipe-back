@@ -1,4 +1,4 @@
-package org.example.domain.youtube.dto.response;
+package org.example.domain.recipe.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

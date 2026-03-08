@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.domain.gemini.client.GeminiClient;
+import org.example.domain.recipe.dto.response.RecipeAnalysisResponse;
 import org.example.domain.youtube.client.YoutubeClient;
-import org.example.domain.youtube.dto.response.RecipeAnalysisResponse;
 import org.example.domain.youtube.dto.response.YoutubeSearchResultResponse;
 import org.example.global.exception.CustomException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class RecipeCrawlService {
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
 
+    @Cacheable(value = "recipe", key = "#foodName")
     public RecipeAnalysisResponse collect(String foodName) {
         YoutubeSearchResultResponse searchResult = youtubeClient.getMostLikedShorts(foodName);
         if (searchResult == null) {
